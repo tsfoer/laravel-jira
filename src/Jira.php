@@ -145,7 +145,7 @@ class Jira
      */
     public static function isErrorResponse(): bool
     {
-        return !(static::$response instanceof stdClass) || isset(static::$response->id, static::$response->key);
+        return !(static::$response instanceof stdClass && isset(static::$response->id, static::$response->key));
     }
 
     /**
