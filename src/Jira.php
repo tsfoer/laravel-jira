@@ -25,12 +25,12 @@ class Jira
      * @param null $jql
      * @return mixed
      */
-    public static function search( $jql = NULL )
+    public static function search($jql = NULL)
     {
-        $data   = json_encode( array( 'jql' => $jql ) );
-        $result = self::request( 'search', $data );
+        $data   = json_encode(['jql' => $jql]);
+        $result = self::request('search', $data);
 
-        return json_decode( $result );
+        return json_decode($result);
     }
 
     /**
@@ -39,13 +39,13 @@ class Jira
      * @param array $data
      * @return mixed
      */
-    public static function create( array $data )
+    public static function create(array $data)
     {
-        $data   = json_encode( array( 'fields' => $data ) );
-        $data = str_replace('\\\\','\\',$data);
-        $result = self::request( 'issue', $data, 1 );
+        $data   = json_encode(['fields' => $data]);
+        $data   = str_replace('\\\\', '\\', $data);
+        $result = self::request('issue', $data, 1);
 
-        return json_decode( $result );
+        return json_decode($result);
     }
 
     /**
@@ -55,13 +55,13 @@ class Jira
      * @param array $data
      * @return mixed
      */
-    public static function update( $issue, array $data )
+    public static function update($issue, array $data)
     {
-        $data   = json_encode( array( 'fields' => $data ) );
-        $data = str_replace('\\\\','\\',$data);
-        $result = self::request( 'issue/' . $issue, $data, 0, 1 );
+        $data   = json_encode(['fields' => $data]);
+        $data   = str_replace('\\\\', '\\', $data);
+        $result = self::request('issue/' . $issue, $data, 0, 1);
 
-        return json_decode( $result );
+        return json_decode($result);
     }
 
     /**
@@ -73,7 +73,7 @@ class Jira
      * @param int $is_put
      * @return mixed
      */
-    private static function request( $request, $data, $is_post = 0, $is_put = 0 )
+    private static function request($request, $data, $is_post = 0, $is_put = 0)
     {
         if (static::$initialised !== true) {
             return '{"errorMessages":["Jira class not initialised"],"errors":{}}';
@@ -81,16 +81,16 @@ class Jira
 
         $ch = curl_init();
 
-        curl_setopt_array( $ch, [
+        curl_setopt_array($ch, [
             CURLOPT_URL            => static::$hostname . ':' . static::$port . '/rest/api/2/' . $request,
             CURLOPT_USERPWD        => static::$username . ':' . static::$password,
             CURLOPT_POSTFIELDS     => $data,
-            CURLOPT_HTTPHEADER     => array( 'Content-type: application/json' ),
+            CURLOPT_HTTPHEADER     => ['Content-type: application/json'],
             CURLOPT_RETURNTRANSFER => 1,
         ]);
 
         if ($is_post) {
-            curl_setopt( $ch, CURLOPT_POST, 1 );
+            curl_setopt($ch, CURLOPT_POST, 1);
         }
 
         if ($is_put) {
