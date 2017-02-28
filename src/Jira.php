@@ -4,6 +4,20 @@ namespace Univerze\Jira;
 
 class Jira
 {
+    /** @var string */
+    protected static $username;
+
+    /** @var string */
+    protected static $password;
+
+    /** @var string */
+    protected static $hostname;
+
+    /** @var int */
+    protected static $port;
+
+    /** @var bool */
+    protected static $initialised = false;
 
     /**
      * Search function to search issues with JQL string
@@ -61,31 +75,58 @@ class Jira
      */
     private static function request( $request, $data, $is_post = 0, $is_put = 0 )
     {
+        if (static::$initialised !== true) {
+            return '{"errorMessages":["Jira class not initialised"],"errors":{}}';
+        }
+
         $ch = curl_init();
 
-        curl_setopt_array( $ch, array(
-            CURLOPT_URL            => config( 'jira.url' ) . '/rest/api/2/' . $request,
-            CURLOPT_USERPWD        => config( 'jira.username' ) . ':' . config( 'jira.password' ),
+        curl_setopt_array( $ch, [
+            CURLOPT_URL            => static::$hostname . ':' . static::$port . '/rest/api/2/' . $request,
+            CURLOPT_USERPWD        => static::$username . ':' . static::$password,
             CURLOPT_POSTFIELDS     => $data,
             CURLOPT_HTTPHEADER     => array( 'Content-type: application/json' ),
             CURLOPT_RETURNTRANSFER => 1,
-        ) );
+        ]);
 
-        if( $is_post )
-        {
+        if ($is_post) {
             curl_setopt( $ch, CURLOPT_POST, 1 );
         }
 
-        if( $is_put )
-        {
-            curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'PUT' );
+        if ($is_put) {
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
         }
 
-        $response = curl_exec( $ch );
+        $response = curl_exec($ch);
 
-        curl_close( $ch );
+        curl_close($ch);
 
         return $response;
     }
 
+    /**
+     * Initialise with the JIRA hostname, port, username and password
+     *
+     * @param string $username
+     * @param string $password
+     * @param string $hostname
+     * @param int $port
+     * @return bool
+     */
+    public static function initialise(string $username, string $password, string $hostname, int $port = 80): bool
+    {
+        // Check required values
+        if (!isset($username, $password, $hostname)) {
+            return false;
+        }
+
+        // Set the required values
+        static::$username    = $username;
+        static::$password    = $password;
+        static::$hostname    = $hostname;
+        static::$port        = $port;
+        static::$initialised = true;
+
+        return true;
+    }
 }
