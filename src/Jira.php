@@ -161,11 +161,11 @@ class Jira
 
         $errors = [];
         if (!empty(static::$response->errorMessages) && is_array(static::$response->errorMessages)) {
-            array_merge($errors, static::$response->errorMessages);
+            $errors = array_merge($errors, static::$response->errorMessages);
         }
 
         if (!empty(static::$response->errors) && static::$response->errors instanceof stdClass) {
-            array_merge($errors, get_object_vars(static::$response->errors));
+            $errors = array_merge($errors, get_object_vars(static::$response->errors));
         }
 
         return $errors;
