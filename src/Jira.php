@@ -2,22 +2,27 @@
 
 namespace Univerze\Jira;
 
+use stdClass;
+
 class Jira
 {
     /** @var string */
-    protected static $username;
+    private static $username;
 
     /** @var string */
-    protected static $password;
+    private static $password;
 
     /** @var string */
-    protected static $hostname;
+    private static $hostname;
 
     /** @var int */
-    protected static $port;
+    private static $port;
 
     /** @var bool */
-    protected static $initialised = false;
+    private static $initialised = false;
+
+    /** @var null|stdClass */
+    private static $response;
 
     /**
      * Search function to search issues with JQL string
@@ -30,7 +35,8 @@ class Jira
         $data   = json_encode(['jql' => $jql]);
         $result = self::request('search', $data);
 
-        return json_decode($result);
+        static::$response = json_decode($result);
+        return static::$response;
     }
 
     /**
@@ -45,7 +51,8 @@ class Jira
         $data   = str_replace('\\\\', '\\', $data);
         $result = self::request('issue', $data, 1);
 
-        return json_decode($result);
+        static::$response = json_decode($result);
+        return static::$response;
     }
 
     /**
@@ -61,7 +68,8 @@ class Jira
         $data   = str_replace('\\\\', '\\', $data);
         $result = self::request('issue/' . $issue, $data, 0, 1);
 
-        return json_decode($result);
+        static::$response = json_decode($result);
+        return static::$response;
     }
 
     /**
@@ -76,7 +84,7 @@ class Jira
     private static function request($request, $data, $is_post = 0, $is_put = 0)
     {
         if (static::$initialised !== true) {
-            return '{"errorMessages":["Jira class not initialised"],"errors":{}}';
+            return '{"errorMessages":["Jira service not properly initialised"],"errors":{}}';
         }
 
         $ch = curl_init();
@@ -128,5 +136,48 @@ class Jira
         static::$initialised = true;
 
         return true;
+    }
+
+    /**
+     * Check if the response is an error response
+     *
+     * @return bool
+     */
+    public static function isErrorResponse(): bool
+    {
+        return isset(static::$response->id, static::$response->key);
+    }
+
+    /**
+     * Get a Collection of errors from the response
+     *
+     * @return array
+     */
+    public static function getErrorCollection(): array
+    {
+        if (empty(static::$response) || !(static::$response instanceof stdClass) || !static::hasErrorMessages()) {
+            return [];
+        }
+
+        $errors = [];
+        if (!empty(static::$response->errorMessages) && is_array(static::$response->errorMessages)) {
+            array_merge($errors, static::$response->errorMessages);
+        }
+
+        if (!empty(static::$response->errors) && static::$response->errors instanceof stdClass) {
+            array_merge($errors, get_object_vars(static::$response->errors));
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Check if the response has error messages
+     *
+     * @return bool
+     */
+    public static function hasErrorMessages(): bool
+    {
+        return isset(static::$response->errorMessages) || isset(static::$response->errors);
     }
 }
