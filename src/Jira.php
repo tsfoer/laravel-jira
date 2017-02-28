@@ -145,7 +145,7 @@ class Jira
      */
     public static function isErrorResponse(): bool
     {
-        return isset(static::$response->id, static::$response->key);
+        return !(static::$response instanceof stdClass) || isset(static::$response->id, static::$response->key);
     }
 
     /**
@@ -179,5 +179,33 @@ class Jira
     public static function hasErrorMessages(): bool
     {
         return isset(static::$response->errorMessages) || isset(static::$response->errors);
+    }
+
+    /**
+     * Get the value of a response field
+     *
+     * @param string $fieldName
+     * @param null $default
+     * @return null
+     */
+    public static function getResponseField(string $fieldName = '', $default = null)
+    {
+        // If this is an error response return the default value
+        if (static::isErrorResponse()) {
+            return $default;
+        }
+
+        // If no field name was given return all the fields as an array
+        if ($fieldName === '') {
+            return get_object_vars(static::$response);
+        }
+
+        // If the given field name does not exist in the response, return the default value
+        if (!isset(static::$response->$fieldName)) {
+            return $default;
+        }
+
+        // Return
+        return static::$response->$fieldName;
     }
 }
