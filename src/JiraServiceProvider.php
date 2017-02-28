@@ -13,9 +13,7 @@ class JiraServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->publishes( [
-            __DIR__ . '/config/jira.php' => config_path( 'jira.php' ),
-        ] );
+        //
     }
 
     /**
@@ -25,11 +23,8 @@ class JiraServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->mergeConfigFrom( __DIR__ . '/config/jira.php', 'jira' );
-
-        $this->app['jira'] = $this->app->share( function ( $app )
-        {
-            return new Jira;
-        } );
+        $this->app['jira'] = $this->app->share(function ($app) {
+            return new Jira();
+        });
     }
 }
