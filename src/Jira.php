@@ -120,7 +120,7 @@ class Jira
      * @param string $response
      * @return string
      */
-    protected static function handleHttpResponse(resource $ch, string $response)
+    protected static function handleHttpResponse($ch, string $response)
     {
         // Get the HTTP code and if it's a 2**, return the response
         $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
