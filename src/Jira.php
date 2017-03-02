@@ -84,7 +84,7 @@ class Jira
     private static function request($request, $data, $is_post = 0, $is_put = 0)
     {
         if (static::$initialised !== true) {
-            return '{"errorMessages":["Jira service not properly initialised"],"errors":{}}';
+            return static::constructErrorResponse("Jira service not properly initialised");
         }
 
         $ch = curl_init();
@@ -106,10 +106,62 @@ class Jira
         }
 
         $response = curl_exec($ch);
+        $response = static::handleHttpResponse($ch, $response);
 
         curl_close($ch);
 
         return $response;
+    }
+
+    /**
+     * Handle non-200 HTTP responses from the API
+     *
+     * @param resource $ch
+     * @param string $response
+     * @return string
+     */
+    protected static function handleHttpResponse(resource $ch, string $response)
+    {
+        // Get the HTTP code and if it's a 2**, return the response
+        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if (substr($httpcode, 0, 1) === "2") {
+            return $response;
+        }
+
+        // Handle the most common http response errors
+        switch ($httpcode) {
+            case 400:
+                return static::constructErrorResponse(
+                    "Jira says it received a bad request. Please check your details."
+                );
+            case 401:
+                return static::constructErrorResponse("Jira authentication or authorisation error.");
+            case 403:
+            case 405:
+                return static::constructErrorResponse("That action is not permitted Jira.");
+            case 404:
+            case 501:
+                return static::constructErrorResponse("That action does not exist on Jira.");
+            case 500:
+                return static::constructErrorResponse("Jira server error.");
+            case 502:
+            case 503:
+            case 504:
+                return static::constructErrorResponse("Jira service currently unavailable.");
+            default:
+                return static::constructErrorResponse("There was a problem with Jira.");
+        }
+    }
+
+    /**
+     * Construct an error response with the same format the Jira API with a custom error message
+     *
+     * @param string $message
+     * @return string
+     */
+    protected static function constructErrorResponse(string $message): string
+    {
+        return sprintf('{"errorMessages":["%s"], "errors":{}}', $message);
     }
 
     /**
