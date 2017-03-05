@@ -23,8 +23,6 @@ class JiraServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app['jira'] = $this->app->singleton(function ($app) {
-            return new Jira();
-        });
+        $this->app->singleton(Jira::class);
     }
 }
